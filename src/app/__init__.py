@@ -1,16 +1,12 @@
-from flask import Flask, Blueprint
+from flask import Flask
+
+from .api import create_blueprint as create_api_blueprint
 
 
 def create_app() -> Flask:
     app = Flask(__name__)
 
-    bp = Blueprint('api', __name__)
-
-    @bp.route('/test')
-    def test_route():
-        return "test"
-
-    app.register_blueprint(bp)
+    app.register_blueprint(create_api_blueprint())
 
     return app
 
