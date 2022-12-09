@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 from .api import create_blueprint as create_api_blueprint
 from .dev import create_blueprint as create_dev_blueprint
+from .general import create_blueprint as create_general_blueprint
 from .db import db
 
 
@@ -13,6 +14,7 @@ def create_app() -> Flask:
 
     SQLAlchemy.init_app(db, app)
 
+    app.register_blueprint(create_general_blueprint())
     app.register_blueprint(create_api_blueprint())
     app.register_blueprint(create_dev_blueprint())
 

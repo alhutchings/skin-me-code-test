@@ -1,0 +1,108 @@
+<div class="question-container">
+    <div class="tooltip">
+    </div>
+    <h1>Create Question</h1>
+
+    <input name="name" placeholder="What is your question?" type="text">
+    <br>
+    <input name="page" placeholder="Which page should it be on?" type="text">
+    <br>
+    <input name="order" placeholder="In which order should it appear on the page?" type="number">
+    <br>
+    <select name="field_type">
+        <option value="" disabled selected>What kind of field type does it require?</option>
+        <option value="free_text">Free Text</option>
+        <option value="single_choice">Single Choice</option>
+        <option value="multi_choice">Multi Choice</option>
+        <option value="address">Address</option>
+    </select>
+    <br>
+    <input name="field_options" placeholder="Field Options" type="text">
+    <i>for choice based questions, please separate each option with a ;</i>
+    <br>
+    <input type="button" onclick="submit()" value="Create">
+
+
+</div>
+<script>
+    function submit() {
+
+        let fieldType = document.querySelector('[name=field_type]').value
+        let name = document.querySelector('[name=name]').value
+        let page = document.querySelector('[name=page]').value
+        let order = document.querySelector('[name=order]').value
+        let field_options = document.querySelector('[name=field_options]').value
+
+        // validation would be added if I had more time
+
+        data = {
+            'field_type': fieldType,
+            'name': name,
+            'page': page,
+            'order': parseInt(order),
+            'field_options': field_options
+        }
+
+        axios.post('/questions', data)
+        .then(res => {
+            document.querySelector('.tooltip').innerHTML = "<div class='success'>" + res.data + "</div>"
+
+            setTimeout(function() {
+                document.querySelector('.tooltip').innerHTML = ""
+            }, 3000)
+
+            document.querySelector('[name=field_type]').value = ''
+            document.querySelector('[name=name]').value = ''
+            document.querySelector('[name=page]').value = ''
+            document.querySelector('[name=order]').value = ''
+            document.querySelector('[name=field_options]').value = ''
+        })
+        .catch(err => {
+            document.querySelector('.tooltip').innerHTML = "<div class='error'>" + err.response.data + "</div>"
+
+            setTimeout(function() {
+                document.querySelector('.tooltip').innerHTML = ""
+            }, 6000)
+        })
+    }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.2.1/axios.min.js"></script>
+<style>
+    .question-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+    }
+    input, select, .tooltip {
+        width: 90%;
+        max-width: 408px;
+    }
+    input, select
+    {
+        padding: 10px;
+        border-radius: 6px;
+        border-style: solid;
+        border-width: 1px;
+        border-color: black;
+    }
+    input[type=button] {
+        background-color: blue;
+        color: white;
+    }
+    .success, .error {
+        padding: 20px;
+        color: white;
+        border-radius: 4px;
+        border-style: none;
+    }
+    .success {
+        background-color: green;
+    }
+    .error {
+        background-color: red;
+    }
+    
+</style>

@@ -1,0 +1,217 @@
+<div class="survey-container">
+    <div class="tooltip">
+    </div>
+    {% for question in questions %}
+    <div class="question-block">
+        <input type="hidden" name="question_id" value="{{ question.id }}">
+        <h2>{{ question.name }}</h2>
+        {% if question.field_type.value == 'free_text' %}
+            <textarea name="answer_{{ question.id }}" cols="30" rows="10">
+    
+            </textarea>
+        {% elif question.field_type.value == 'multi_choice' %}    
+        <ul>
+            {% for answer in question.option_array() %}
+                <li>
+                    <input type="checkbox" name="answer_{{ question.id }}" value="{{answer}}">
+                    <label for="answer_{{ question.id }}">{{answer}}</label>
+                </li>
+            {% endfor %}
+        </ul>
+        {% elif question.field_type.value == 'single_choice' %}    
+        <ul>
+            {% for answer in question.option_array() %}
+                <li>
+                    <input type="radio" name="answer_{{ question.id }}" value="{{answer}}">
+                    <label for="answer_{{ question.id }}">{{answer}}</label>
+                </li>
+            {% endfor %}
+        </ul>
+        {% elif question.field_type.value == 'address' %}    
+        <ul>
+            <li>
+                <input type="text" name="answer_{{ question.id }}" placeholder="Address Line1">
+                <br>
+            </li>
+            <li>
+                <input type="text" name="answer_{{ question.id }}" placeholder="Address Line2">
+                <br>
+            </li>
+            <li>
+                <input type="text" name="answer_{{ question.id }}" placeholder="City">
+                <br>
+            </li>
+            <li>
+                <input type="text" name="answer_{{ question.id }}" placeholder="County">
+                <br>
+            </li>
+            <li>
+                <input type="text" name="answer_{{ question.id }}" placeholder="Country">
+                <br>
+            </li>
+            <li>
+                <input type="text" name="answer_{{ question.id }}" placeholder="Post Code">
+            </li>
+        </ul>
+        {% endif %}
+    </div>
+    {% endfor %}
+    <br>
+    <input type="button" onclick="submit()" value="Next">
+</div>
+<!-- Would move css and js to a separate file if I had more time -->
+<script>
+    function submit() {
+
+        // Used JS instead of forms to show json api based structure
+        let page = parseInt(window.location.search.replace('?page=', ''))
+        
+        // moved into a separate function to avoid crowding
+        let answers = formatAnswerData()
+
+        let data = {
+            'answers': answers,
+            'page': page,
+        }
+
+        axios.post('/answers', data)
+        .then(res => {
+            window.location.href = '/survey?page=' + (page+1)
+        })
+        .catch(err => {
+            document.querySelector('.tooltip').innerHTML = "<div class='error'>" + err.response.data + "</div>"
+
+            setTimeout(function() {
+                document.querySelector('.tooltip').innerHTML = ""
+            }, 3000)
+        })
+
+    }
+
+    function formatAnswerData() {
+
+        let answers = []
+
+        let questionBlocks = document.querySelectorAll('.question-block')
+
+        // validation would be added if I had more time
+
+        for (let i = 0; i < questionBlocks.length; i++) {
+            
+            let question_id = questionBlocks[i].querySelector('[name=question_id]').value            
+            let answerNodes = questionBlocks[i].querySelectorAll('[name=answer_' + question_id + ']')
+            let answer = ''
+            
+            if (answerNodes[0].type === 'textarea') {
+                answer = questionBlocks[i].querySelector('[name=answer_' + question_id + ']').value
+            } else if (answerNodes[0].type === 'radio') {
+                answer = formatSingleChoiceAnswers(answerNodes)
+            } else if (answerNodes[0].type === 'checkbox') {
+                answer = formatMultiChoiceAnswers(answerNodes)
+            } else if (answerNodes[0].type === 'text') {
+                answer = formatAddressAnswers(answerNodes)
+            }
+            answers.push({
+                'question_id': question_id,
+                'answer': answer,
+            })
+        }
+
+        return answers
+    }
+
+    function formatSingleChoiceAnswers(answerNodes) {
+        
+        let answer = ''
+
+        for (let i = 0; i < answerNodes.length; i++) {
+            if(answerNodes[i].checked === true) {
+                answer = answerNodes[i].value
+                break
+            }
+        }
+
+        return answer
+    }
+
+    function formatMultiChoiceAnswers(answerNodes) {
+
+        let answer = ''
+
+        for (let i = 0; i < answerNodes.length; i++) {
+            if(answerNodes[i].checked === true) {
+                // multi choice answers are saved with ; separators
+                answer += answerNodes[i].value + ';'             
+            }
+        }
+
+        if (answer.length > 0) {
+            // remove the last semi colon
+            answer = answer.slice(0, -1)
+        }
+
+        return answer
+    }
+
+    function formatAddressAnswers(answerNodes) {
+
+        let answer = ''
+
+        for (let i = 0; i < answerNodes.length; i++) {
+            // address answers are saved with ; separators
+            answer += answerNodes[i].value + ';'
+        }
+
+        if (answer.length > 0) {
+            // remove the last semi colon
+            answer = answer.slice(0, -1)
+        }
+
+        return answer
+    }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.2.1/axios.min.js"></script>
+<style>
+    .survey-container,
+    .question-block {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .survey-container {
+        margin-top: 100px;
+        margin-bottom: 100px;
+    }
+    input:not([type=checkbox], [type=radio]), textarea, ul, .tooltip {
+        width: 90%;
+        max-width: 408px;
+    }
+    li {
+        overflow: hidden;
+    }
+    ul {
+        list-style: none;
+        padding-left: 0;
+    }
+    input, select
+    {
+        padding: 10px;
+        border-radius: 6px;
+        border-style: solid;
+        border-width: 1px;
+        border-color: black;
+    }
+    input[type=button] {
+        background-color: blue;
+        color: white;
+    }
+    .error {
+        padding: 20px;
+        color: white;
+        border-radius: 4px;
+        border-style: none;
+        background-color: red;
+    }
+</style>
